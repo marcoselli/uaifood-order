@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: UaiFood Orders
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    serialization:
+      fail-on-empty-beans: false
+      write-dates-as-timestamps: true
+    deserialization:
+      fail-on-unknown-properties: false
