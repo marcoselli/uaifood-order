@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code Analysis
+        uses: actions/checkout@v4
+
+      - name: JDK Configuration
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+
+      - name: Gradle Wrapper Validation
+        uses: gradle/wrapper-validation-action@v1
+        with:
+          gradle-version: '8.13'
+
+      - name: Change Gradlew Wrapper permissions
+        run: chmod +x ./gradlew
+
+      - name: Build and Run Tests
+        run: ./gradlew build test  
