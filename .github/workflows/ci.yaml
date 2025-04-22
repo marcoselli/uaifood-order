@@ -55,7 +55,7 @@ jobs:
           distribution: 'zulu'
  
        - name: Build project
-         run: mvn clean install -DskipTests
+         run: ./gradlew clean build -x test
  
        - name: SonarQube Scan
          uses: SonarSource/sonarqube-scan-action@v5.1.0
