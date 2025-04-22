@@ -4,6 +4,7 @@ plugins {
 	id("org.springframework.boot") version "3.4.4"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("jacoco")
+	id("org.sonarqube") version "6.1.0.5360"
 }
 
 group = "br.edu.uaifood"
@@ -70,4 +71,17 @@ tasks.jacocoTestReport {
 			}
 		)
 	)
+}
+
+sonarqube {
+	properties {
+		property("sonar.projectKey", "marcoselli_uaifood-order")
+		property("sonar.organization", "marcoselli")
+		property("sonar.host.url", "https://sonarcloud.io")
+		property("sonar.kotlin.version", "1.9.25")
+		property("sonar.sources", "src/main/kotlin")
+		property("sonar.tests", "src/test/kotlin")
+		property("sonar.test.inclusions", "**/*Test*")
+		property("sonar.kotlin.jacoco.reportPaths", "${layout.buildDirectory}/reports/jacoco/test/jacocoTestReport.xml")
+	}
 }

@@ -3,30 +3,62 @@ name: CI
 on:
   pull_request:
     branches:
-      - main
       - develop
+      - master
 
 jobs:
-  build:
+  validation:
+    name: 🛡️ Project validation
     runs-on: ubuntu-latest
 
     steps:
-      - name: Code Analysis
+      - name: Code checkout
         uses: actions/checkout@v4
 
-      - name: JDK Configuration
+      - name: Gradle wrapper validation
+        uses: gradle/wrapper-validation-action@v1
+
+  build_test:
+    name: 🧪 Build && Tests
+    runs-on: ubuntu-latest
+    needs: validation
+
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      - name: Java setup
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'zulu'
 
-      - name: Gradle Wrapper Validation
-        uses: gradle/wrapper-validation-action@v1
-        with:
-          gradle-version: '8.13'
-
-      - name: Change Gradlew Wrapper permissions
+      - name: Change Gradle wrapper permissions
         run: chmod +x ./gradlew
 
-      - name: Build and Run Tests
-        run: ./gradlew build test  
+      - name: Build e Rodar Testes
+        run: ./gradlew build test
+
+  sonarqube:
+    name: 📊 SonarQube Analysis
+    runs-on: ubuntu-latest
+    needs: build_test
+
+    steps:
+       - name: Code checkout
+         uses: actions/checkout@v4
+
+       - name: Java setup
+         uses: actions/setup-java@v4
+         with: 
+          java-version: '21'
+          distribution: 'zulu'
+ 
+       - name: Change Gradle wrapper permissions
+         run: chmod +x ./gradlew
+ 
+       - name: SonarQube Scan
+         run: |
+          ./gradlew sonar \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            --info
