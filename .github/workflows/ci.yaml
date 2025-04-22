@@ -36,7 +36,7 @@ jobs:
       - name: Change Gradle wrapper permissions
         run: chmod +x ./gradlew
 
-      - name: Build e Rodar Testes
+      - name: Build && Run Tests
         run: ./gradlew build test
 
   sonarqube:
@@ -54,11 +54,13 @@ jobs:
           java-version: '21'
           distribution: 'zulu'
  
-       - name: Change Gradle wrapper permissions
-         run: chmod +x ./gradlew
+       - name: Build project
+         run: mvn clean install -DskipTests
  
        - name: SonarQube Scan
-         run: |
-          ./gradlew sonar \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
-            --info
+         uses: SonarSource/sonarqube-scan-action@v5.1.0
+         env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+        
+      
