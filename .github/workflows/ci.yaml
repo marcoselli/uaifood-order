@@ -62,5 +62,15 @@ jobs:
          env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
+         with:
+          args: >
+            -Dsonar.projectKey=marcoselli_uaifood-order
+            -Dsonar.organization=marcoselli
+            -Dsonar.sources=src/main/kotlin
+            -Dsonar.tests=src/test/kotlin
+            -Dsonar.test.inclusions=**/*Test*
+            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+            -Dsonar.language=kotlin
+            -Dsonar.kotlin.version=1.9.25
         
       
