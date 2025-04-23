@@ -1,23 +1,27 @@
 name: CD
 
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["CI"] 
+    types:
+      - completed  
 
 jobs:
   build-and-push:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.pull_request.base.ref == 'main' }}  
     runs-on: ubuntu-latest
 
     steps:
-      - name: Verify branch origin 
+      - name: Verify branch origin
         id: check_branch
         run: |
           BRANCH_NAME=${{ github.head_ref }}
           echo "PR branch origin: $BRANCH_NAME"
+          
+          # Verifica se a branch de origem é uma branch release/* (ex: release/1.0.0)
           if [[ "$BRANCH_NAME" =~ ^release\/([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             VERSION="${BASH_REMATCH[1]}"
-            echo "Vesion detected: $VERSION"
+            echo "Version detected: $VERSION"
             echo "version=$VERSION" >> $GITHUB_OUTPUT
           else
             echo "::error::This PR must be originated from branch: release/* (ex: release/1.0.0)."
