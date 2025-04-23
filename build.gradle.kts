@@ -56,4 +56,18 @@ tasks.jacocoTestReport {
 		xml.required.set(true)
 		html.required.set(true)
 	}
+	classDirectories.setFrom(
+		files(
+			classDirectories.files.map {
+				fileTree(it) {
+					exclude(
+						"br/edu/uaifood/orders/config/**",
+						"br/edu/uaifood/orders/util/**",
+						"br/edu/uaifood/orders/exception/**",
+						"br/edu/uaifood/orders/UaiFoodOrdersApplication**"
+					)
+				}
+			}
+		)
+	)
 }

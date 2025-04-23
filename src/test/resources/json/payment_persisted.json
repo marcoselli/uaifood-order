@@ -1,0 +1,7 @@
+{
+  "status": "PENDING",
+  "payment_id": "PAY-123456",
+  "paymentMethod": "PIX",
+  "amount": 150.00,
+  "qrCode": "https://example.com/qrcode"
+}

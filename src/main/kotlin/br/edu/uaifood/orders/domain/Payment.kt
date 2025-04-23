@@ -8,8 +8,6 @@ data class Payment(
     val amount: Double,
     val qrCode: String?
 ) {
-    fun isApproved() = status == PaymentStatus.APPROVED
-
     companion object {
         fun from(paymentPersisted: PaymentEntity): Payment =
             Payment(
