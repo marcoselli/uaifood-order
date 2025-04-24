@@ -128,15 +128,18 @@ jobs:
           git config --global user.email "marco_selli@hotmail.com"
           git clone https://x-access-token:${{ secrets.SYNC_REPOSITORY_TOKEN }}@github.com/marcoselli/uaifood-helm-template.git
 
-      - name: Update YAML version
+      - name: Update version  on external repo
         uses: fjogeleit/yaml-update-action@v0.16.0
         with:
-          valueFile: 'uaifood-helm-template/values.yaml'   
-          propertyPath: 'version'                          
-          value: ${{ needs.docker_integration.outputs.version }}  
-          commitChange: true                             
-          commitMessage: "Update version to ${{ needs.docker_integration.outputs.version }}" 
-          targetBranch: 'main'    
+          valueFile: 'uaifood-helm-template/values.yaml'  
+          propertyPath: 'version'                         
+          value: ${{ needs.docker_integration.outputs.version }}
+          repository: marcoselli/uaifood-helm-template    
+          branch: master                                  
+          createPR: false                                
+          commitChange: true                              
+          message: 'Update version to ${{ needs.docker_integration.outputs.version }}'
+          token: ${{ secrets.SYNC_REPOSITORY_TOKEN }}   
         
 
 
