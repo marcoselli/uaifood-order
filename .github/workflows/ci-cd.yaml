@@ -1,5 +1,3 @@
-name: CI + CD
-
 on:
   pull_request:
     branches:
@@ -73,11 +71,11 @@ jobs:
             -Dsonar.language=kotlin
             -Dsonar.kotlin.version=1.9.25
 
-  cd:
-    name: 🚀 CD (Docker Build & Push)
+  docker_integration:
+    name: 🐳 Docker Build & Push
     runs-on: ubuntu-latest
     needs: sonarqube
-    if: github.base_ref == 'main'
+    if: github.event.pull_request.base.ref == 'main'
     
     steps:
       - name: Verify branch origin  
@@ -111,3 +109,36 @@ jobs:
       - name: Push image to Docker Hub
         run: |
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/uaifood-order:${{ steps.check_branch.outputs.version }}
+
+    outputs:
+      version: ${{ steps.check_branch.outputs.version }}      
+
+  sync_repo:
+    name: 🔁 Sync Helm template repo
+    runs-on: ubuntu-latest
+    needs: docker_integration
+    if: github.event.pull_request.base.ref == 'main'
+
+    steps:
+      - name: Clone external repo
+        run: |
+          git config --global user.name "marcoselli"
+          git config --global user.email "marco_selli@hotmail.com"
+          git clone https://x-access-token:${{ secrets.SYNC_REPOSITORY_TOKEN }}@github.com/marcoselli/uaifood-helm-template.git
+
+      - name: Update YAML version
+        uses: cschleiden/actions-yaml@v1
+        with:
+          file: uaifood-helm-template/values.yaml
+          key: version
+          value: ${{ needs.docker_integration.outputs.version }}
+
+      - name: Commit and push changes
+        run: |
+          cd uaifood-helm-template
+          git add values.yaml
+          git commit -m "Update version to ${{ needs.docker_integration.outputs.version }}"
+          git push origin master
+        
+
+
