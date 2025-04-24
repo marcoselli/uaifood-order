@@ -129,18 +129,14 @@ jobs:
           git clone https://x-access-token:${{ secrets.SYNC_REPOSITORY_TOKEN }}@github.com/marcoselli/uaifood-helm-template.git
 
       - name: Update YAML version
-        uses: cschleiden/actions-yaml@v1
+        uses: fjogeleit/yaml-update-action@v0.16.0
         with:
-          file: uaifood-helm-template/values.yaml
-          key: version
-          value: ${{ needs.docker_integration.outputs.version }}
-
-      - name: Commit and push changes
-        run: |
-          cd uaifood-helm-template
-          git add values.yaml
-          git commit -m "Update version to ${{ needs.docker_integration.outputs.version }}"
-          git push origin master
+          valueFile: 'uaifood-helm-template/values.yaml'   
+          propertyPath: 'version'                          
+          value: ${{ needs.docker_integration.outputs.version }}  
+          commitChange: true                             
+          commitMessage: "Update version to ${{ needs.docker_integration.outputs.version }}" 
+          targetBranch: 'main'    
         
 
 
