@@ -47,12 +47,18 @@ jobs:
       version: ${{ steps.check_branch.outputs.version }}      
 
   sync_repo:
-    name: 🔁 Sync Helm template repo
+    name: 🔁 Sync Helm repository
     runs-on: ubuntu-latest
     needs: docker_integration
-    if: github.event.pull_request.base.ref == 'main'
 
     steps:
+      - name: Checkout Target Repository
+        uses: actions/checkout@v3
+        with:
+          repository: marcoselli/uaifood-helm-template 
+          path: infrastructure
+          token: ${{ secrets.GITHUB_TOKEN }}   
+
       - name: Update version on external repo
         uses: fjogeleit/yaml-update-action@v0.16.0
         with:
@@ -61,10 +67,10 @@ jobs:
           value: ${{ needs.docker_integration.outputs.version }}
           repository: marcoselli/uaifood-helm-template    
           branch: master                                  
-          createPR: false                                
-          commitChange: true                              
           message: 'Update version to ${{ needs.docker_integration.outputs.version }}'
+          force: true
           token: ${{ secrets.SYNC_REPOSITORY_TOKEN }}   
+          workDir: infrastructure
         
 
 
