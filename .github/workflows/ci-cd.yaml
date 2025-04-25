@@ -3,14 +3,13 @@ name: CI/CD
 on:
   pull_request:
     branches:
-      - main
       - develop
+      - main
 
 jobs:
   validation:
     name: 🛡️ Project validation
     runs-on: ubuntu-latest
-
     steps:
       - name: Code checkout
         uses: actions/checkout@v4
@@ -22,7 +21,6 @@ jobs:
     name: 🧪 Build && Tests
     runs-on: ubuntu-latest
     needs: validation
-
     steps:
       - name: Code checkout
         uses: actions/checkout@v4
@@ -40,10 +38,10 @@ jobs:
         run: ./gradlew build test
 
   sonarqube:
+    if: github.event.pull_request.base.ref == 'main'    
     name: 📊 SonarQube Analysis
     runs-on: ubuntu-latest
     needs: build_test
-
     steps:
       - name: Code checkout
         uses: actions/checkout@v4
@@ -53,10 +51,10 @@ jobs:
         with: 
           java-version: '21'
           distribution: 'zulu'
- 
+
       - name: Build project
         run: ./gradlew clean build -x test
- 
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5.1.0
         env:
@@ -74,13 +72,30 @@ jobs:
             -Dsonar.kotlin.version=1.9.25
 
   docker_integration:
+    if: github.event.pull_request.base.ref == 'main'
     name: 🐳 Docker Build & Push
     runs-on: ubuntu-latest
     needs: sonarqube
-    if: github.event.pull_request.base.ref == 'main'
-    
+
     steps:
-      - name: Verify branch origin  
+      - name: Code checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Validate branch origin
+        run: |
+          BRANCH_NAME=${{ github.head_ref }}
+          echo "Checking if $BRANCH_NAME comes from develop"
+
+          if git merge-base --is-ancestor origin/develop origin/$BRANCH_NAME; then
+            echo "✅ Branch $BRANCH_NAME validated"
+          else
+            echo "::error::❌ Branch $BRANCH_NAME has a different origin!"
+            exit 1
+          fi
+      
+      - name: Check release branch pattern 
         id: check_branch
         run: |
           BRANCH_NAME=${{ github.head_ref }}
@@ -94,9 +109,6 @@ jobs:
             echo "::error::This PR must be originated from branch: release/* (ex: release/1.0.0)."
             exit 1
           fi
-
-      - name: Code checkout
-        uses: actions/checkout@v4
 
       - name: Docker Hub login
         uses: docker/login-action@v3
@@ -113,30 +125,30 @@ jobs:
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/uaifood-order:${{ steps.check_branch.outputs.version }}
 
     outputs:
-      version: ${{ steps.check_branch.outputs.version }}      
+      version: ${{ steps.check_branch.outputs.version }}
 
   sync_repo:
-    name: 🔁 Sync Helm template repo
+    name: 🔁 Sync Helm repository
     runs-on: ubuntu-latest
     needs: docker_integration
-    if: github.event.pull_request.base.ref == 'main'
 
     steps:
-      - name: Clone external repo
-        run: |
-          git config --global user.name "marcoselli"
-          git config --global user.email "marco_selli@hotmail.com"
-          git clone https://x-access-token:${{ secrets.SYNC_REPOSITORY_TOKEN }}@github.com/marcoselli/uaifood-helm-template.git
+      - name: Checkout Target Repository
+        uses: actions/checkout@v3
+        with:
+          repository: marcoselli/uaifood-helm-template 
+          path: infrastructure
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update YAML version
+      - name: Update version on external repo
         uses: fjogeleit/yaml-update-action@v0.16.0
         with:
-          valueFile: 'uaifood-helm-template/values.yaml'   
-          propertyPath: 'version'                          
-          value: ${{ needs.docker_integration.outputs.version }}  
-          commitChange: true                             
-          commitMessage: "Update version to ${{ needs.docker_integration.outputs.version }}" 
-          targetBranch: 'main'    
-        
-
-
+          valueFile: 'values.yaml'
+          propertyPath: 'version'
+          value: ${{ needs.docker_integration.outputs.version }}
+          repository: marcoselli/uaifood-helm-template
+          branch: master
+          message: 'Update version to ${{ needs.docker_integration.outputs.version }}'
+          force: true
+          token: ${{ secrets.SYNC_REPOSITORY_TOKEN }}
+          workDir: infrastructure
