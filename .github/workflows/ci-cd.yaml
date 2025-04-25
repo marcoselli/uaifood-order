@@ -75,6 +75,7 @@ jobs:
     if: github.event.pull_request.base.ref == 'main'
     name: 🐳 Docker Build & Push
     runs-on: ubuntu-latest
+    needs: sonarqube
 
     steps:
       - name: Code checkout
